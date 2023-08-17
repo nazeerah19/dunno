@@ -1,0 +1,49 @@
+import time
+import threading
+import keyboard
+
+class TypingTracker:
+    def __init__(self):
+        self.start_time = None
+        self.typing_time = 0
+        self.typing = False
+
+    def start_typing(self):
+        if not self.typing:
+            self.typing = True
+            self.start_time = time.time()
+
+    def stop_typing(self):
+        if self.typing:
+            self.typing = False
+            end_time = time.time()
+            self.typing_time += end_time - self.start_time
+            self.start_time = None
+
+    def track_typing(self):
+        keyboard.on_press(self.start_typing)
+        keyboard.on_release(self.stop_typing)
+
+        while True:
+            time.sleep(1)  # Check every second
+            if not self.typing and self.start_time is not None:
+                self.stop_typing()
+
+    def start_tracking(self):
+        tracking_thread = threading.Thread(target=self.track_typing)
+        tracking_thread.daemon = True
+        tracking_thread.start()
+
+    def get_typing_time(self):
+        return self.typing_time
+
+if __name__ == "__main__":
+    tracker = TypingTracker()
+    tracker.start_tracking()
+
+    try:
+        while True:
+            print(f"Time spent typing: {tracker.get_typing_time():.2f} seconds", end="\r")
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
